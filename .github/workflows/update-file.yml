@@ -29,14 +29,13 @@ jobs:
         git config --global user.email 'github-actions@github.com'
 
         echo "Checking for changes..."
-        git diff --exit-code --quiet pp.xml
-        if [ $? -ne 0 ]; then
+        if git diff --exit-code --quiet pp.xml; then
+          echo "No changes detected, skipping commit."
+        else
           echo "Changes detected, committing and pushing..."
           git add pp.xml
           git commit -m "Update pp.xml"
           git push
-        else
-          echo "No changes detected, skipping commit."
         fi
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
