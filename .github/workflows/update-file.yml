@@ -21,8 +21,8 @@ jobs:
       run: |
         git config --global user.name 'github-actions'
         git config --global user.email 'github-actions@github.com'
-        cp pp.xml pp.xml  # 替换为你仓库中指定文件的路径
-        git add pp.xml
+        cp pp.xml ./pp.xml  # 将文件拷贝到仓库根目录
+        git add ./pp.xml
         git commit -m "Update pp.xml"
         git push
       env:
