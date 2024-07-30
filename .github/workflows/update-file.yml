@@ -1,9 +1,9 @@
 name: Update File
 
 on:
-  workflow_dispatch:
   schedule:
     - cron: '0 2 * * *'  # 每天凌晨2点执行
+  workflow_dispatch:  # 允许手动触发
 
 jobs:
   update-file:
@@ -15,15 +15,31 @@ jobs:
 
     - name: Fetch content
       run: |
+        echo "Fetching content from URL..."
         curl -o pp.xml https://epg.112114.xyz/pp.xml
+        if [ $? -ne 0 ]; then
+          echo "Error: Failed to fetch content."
+          exit 1
+        fi
 
     - name: Commit and push changes
       run: |
+        echo "Configuring git..."
         git config --global user.name 'github-actions'
         git config --global user.email 'github-actions@github.com'
+        
+        echo "Copying fetched file to repository..."
         cp pp.xml ./pp.xml  # 将文件拷贝到仓库根目录
-        git add ./pp.xml
-        git commit -m "Update pp.xml"
-        git push
+        
+        echo "Checking for changes..."
+        git diff --exit-code --quiet ./pp.xml
+        if [ $? -ne 0 ]; then
+          echo "Changes detected, committing and pushing..."
+          git add ./pp.xml
+          git commit -m "Update pp.xml"
+          git push
+        else
+          echo "No changes detected, skipping commit."
+        fi
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
