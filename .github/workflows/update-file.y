@@ -1,41 +1,105 @@
-name: Update File
+name: my_tv Release
 
+# action事件触发
 on:
-  schedule:
-    - cron: '0 2 * * *'  # 每天凌晨2点执行
-  workflow_dispatch:  # 允许手动触发
+  workflow_dispatch:
+  push:
+    # push tag时触发
+    tags:
+      - "v*.*.*"
 
+# 可以有多个jobs
 jobs:
-  update-file:
+  android:
+    # 运行环境 ubuntu-latest window-latest mac-latest
     runs-on: ubuntu-latest
 
+    # 每个jobs中可以有多个steps
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v2
+      - name: 代码迁出
+        uses: actions/checkout@v3
 
-    - name: Fetch content
-      run: |
-        echo "Fetching content from URL..."
-        curl -o pp.xml https://epg.112114.xyz/pp.xml
-        if [ $? -ne 0 ]; then
-          echo "Error: Failed to fetch content."
-          exit 1
-        fi
+      - name: 构建Java环境
+        uses: actions/setup-java@v3
+        with:
+          distribution: "zulu"
+          java-version: "17"
 
-    - name: Commit and push changes
-      run: |
-        echo "Configuring git..."
-        git config --global user.name 'github-actions'
-        git config --global user.email 'github-actions@github.com'
+      - name: 检查缓存
+        uses: actions/cache@v2
+        id: cache-flutter
+        with:
+          path: /root/flutter-sdk # Flutter SDK 的路径
+          key: ${{ runner.os }}-flutter-${{ hashFiles('**/pubspec.lock') }}
 
-        echo "Checking for changes..."
-        if git diff --exit-code --quiet pp.xml; then
-          echo "No changes detected, skipping commit."
-        else
-          echo "Changes detected, committing and pushing..."
-          git add pp.xml
-          git commit -m "Update pp.xml"
-          git push
-        fi
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: 安装Flutter
+        if: steps.cache-flutter.outputs.cache-hit != 'true'
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.19.4
+          channel: any
+
+      - name: 下载项目依赖
+        run: flutter pub get
+
+      - name: 解码生成 jks
+        run: echo $KEYSTORE_BASE64 | base64 -di > android/app/keystore.jks
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+
+      - name: flutter build apk
+        run: flutter build apk --release --target-platform android-arm64,android-arm
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD}}
+
+      - name: 获取版本号
+        id: version
+        run: echo "version=${GITHUB_REF#refs/tags/v}" >>$GITHUB_OUTPUT
+
+      - name: 重命名应用
+        run: |
+          # DATE=${{ steps.date.outputs.date }}
+          for file in build/app/outputs/flutter-apk/app-*.apk; do
+            if [[ $file =~ app-(.?*)release.apk ]]; then
+              new_file_name="build/app/outputs/flutter-apk/my_tv-${BASH_REMATCH[1]}${{ steps.version.outputs.version }}.apk"
+              mv "$file" "$new_file_name"
+            fi
+          done
+
+      - name: 上传
+        uses: actions/upload-artifact@v3
+        with:
+          name: my_tv-Release
+          path: |
+            build/app/outputs/flutter-apk/my_tv-*.apk
+
+  upload:
+    runs-on: ubuntu-latest
+
+    needs:
+      - android
+    steps:
+      - uses: actions/download-artifact@v3
+        with:
+          name: my_tv-Release
+          path: ./my_tv-Release
+
+      - name: Install dependencies
+        run: sudo apt-get install tree -y
+
+      - name: Get version
+        id: version
+        run: echo "version=${GITHUB_REF#refs/tags/v}" >>$GITHUB_OUTPUT
+
+      - name: Upload Release
+        uses: ncipollo/release-action@v1
+        with:
+          name: v${{ steps.version.outputs.version }}
+          token: ${{ secrets.GIT_TOKEN }}
+          omitBodyDuringUpdate: true
+          omitNameDuringUpdate: true
+          omitPrereleaseDuringUpdate: true
+          allowUpdates: true
+          artifacts: my_tv-Release/*
