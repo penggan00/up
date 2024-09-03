@@ -19,7 +19,7 @@ jobs:
       - id: get-project
       # 读取项目地址
         name: Get project name
-        run: echo "::set-output name=PROJECT::$(cat project-to-build)"
+        run: echo "::set-output name=PROJECT::$(cat https://github.com/penggan00/my_tv-1.2.6)"
       - name: Clone project
       # 拉取项目源码到虚拟环境
         run: git clone --depth=1 ${{ steps.get-project.outputs.PROJECT }} project

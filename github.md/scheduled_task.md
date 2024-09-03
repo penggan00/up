@@ -11,10 +11,10 @@ chat_id = '7071127210'
 bot = telegram.Bot(token=telegram_token)
 
 # SSH 连接的配置
-hostname = 's5.serv00.com'
+hostname = 's4.serv00.com'
 port = 22
-username = 'penggan0'
-password = '@zWh$NS12)3niw!b0qzF'
+username = 'penggan00'
+password = '6Bp#Ku$Y37yj62a#E9$S'
 
 def ssh_task():
     try:
