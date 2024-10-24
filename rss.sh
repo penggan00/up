@@ -26,6 +26,19 @@ source rss_venv/bin/activate
 echo "安装必要的库..."
 pip install --upgrade pip
 pip install aiohttp aiomysql feedparser python-dotenv python-telegram-bot
+
+# 创建虚拟环境（如果不存在）
+if [ ! -d "mail_venv" ]; then
+    echo "创建虚拟环境 mail_venv..."
+    python3 -m venv mail_venv
+fi
+
+# 激活虚拟环境
+echo "激活虚拟环境..."
+source mail_venv/bin/activate
+# 安装必要的库
+echo "安装必要的库..."
+pip install --upgrade pip
 pip install requests html2text python-telegram-bot beautifulsoup4 langdetect markdownify mysql-connector-python pytz
 
 # 创建 rss.py 文件（如果不存在）
