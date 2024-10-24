@@ -6,11 +6,11 @@ set -e
 # 创建 translate 目录（如果不存在）
 if [ ! -d "translate" ]; then
     echo "创建 translate 目录..."
-    mkdir translate
+    mkdir ~/translate
 fi
 
 # 进入 translate 目录
-cd translate
+cd ~/translate
 
 # 初始化 npm 项目
 echo "初始化 npm 项目..."

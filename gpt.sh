@@ -6,11 +6,11 @@ set -e
 # 创建 gpt 目录（如果不存在）
 if [ ! -d "gpt" ]; then
     echo "创建 gpt 目录..."
-    mkdir gpt
+    mkdir ~/gpt
 fi
 
 # 进入 gpt 目录
-cd gpt
+cd ~/gpt
 
 # 初始化 npm 项目
 echo "初始化 npm 项目..."

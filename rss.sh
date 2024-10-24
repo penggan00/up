@@ -6,11 +6,11 @@ set -e
 # 创建目录 rss（如果不存在）
 if [ ! -d "rss" ]; then
     echo "创建 rss 目录..."
-    mkdir rss
+    mkdir ~/rss
 fi
 
 # 进入 rss 目录
-cd rss
+cd ~/rss
 
 # 创建虚拟环境（如果不存在）
 if [ ! -d "rss_venv" ]; then
